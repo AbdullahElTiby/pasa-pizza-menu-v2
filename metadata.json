@@ -1,0 +1,5 @@
+{
+  "name": "GourmetAI Menu Manager",
+  "description": "A dynamic menu website where restaurant owners can manage dishes with AI-assisted description and image generation, and customers can view the live menu.",
+  "requestFramePermissions": []
+}
