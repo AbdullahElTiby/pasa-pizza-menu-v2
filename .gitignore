@@ -29,14 +29,50 @@ npm-debug.log*
 .cache/
 *.tsbuildinfo
 
-# Agent/Skills folders (these shouldn't be in the main repo)
+# AI Assistant/Skills folders
 .agents/
 .vibe/
 .windsurf/
 .zencoder/
+.adal/
+.aider-desk/
+.augment/
+.bob/
+.claude/
+.codeartsdoer/
+.codebuddy/
+.codemaker/
+.codestudio/
+.commandcode/
+.continue/
+.cortex/
+.crush/
+.devin/
+.factory/
+.forge/
+.goose/
+.iflow/
+.junie/
+.kilocode/
+.kiro/
+.kode/
+.mcpjam/
+.mux/
+.neovate/
+.openhands/
+.pi/
+.pochi/
+.qoder/
+.qwen/
+.roo/
+.rovodev/
+.tabnine/
+.trae/
 skills/
 skills-lock.json
 
 # Other
 *.tgz
 *.zip
+package-lock.json
+metadata.json
