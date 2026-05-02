@@ -1,8 +1,42 @@
+# Dependencies
 node_modules/
+
+# Build output
 dist/
-.DS_Store
-*.log
+build/
+
+# Environment
 .env
 .env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Cache
 .vite/
 .cache/
+*.tsbuildinfo
+
+# Agent/Skills folders (these shouldn't be in the main repo)
+.agents/
+.vibe/
+.windsurf/
+.zencoder/
+skills/
+skills-lock.json
+
+# Other
+*.tgz
+*.zip
