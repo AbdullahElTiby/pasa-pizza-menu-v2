@@ -10,8 +10,9 @@ import { CartDrawer } from './components/CartDrawer';
 import { DeleteConfirmationModal } from './components/DeleteConfirmationModal';
 import { BranchSelector } from './components/BranchSelector';
 import { BRANCHES } from './config/branches';
-import { Edit3, Eye, Plus, Trash2, LogOut, XCircle, Search, ShoppingBag, Moon, Sun, MapPin, ArrowUp, MoreHorizontal, Loader2, RefreshCw } from 'lucide-react';
+import { Edit3, Eye, Plus, Trash2, LogOut, XCircle, Search, ShoppingBag, Moon, Sun, MapPin, ArrowUp, MoreHorizontal, Loader2, RefreshCw, Lock } from 'lucide-react';
 import { CartItem } from './types';
+import { startKeepAlive, stopKeepAlive } from './services/keepAliveService';
 
 const BRANCH_STORAGE_KEY = 'pasa_branch';
 
@@ -44,7 +45,7 @@ const App: React.FC = () => {
         localStorage.setItem(BRANCH_STORAGE_KEY, branchId);
         return branchId;
       }
-      return localStorage.getItem(BRANCH_STORAGE_KEY);
+      return null;
     }
     return null;
   });
@@ -53,6 +54,7 @@ const App: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [isAuthChecking, setIsAuthChecking] = useState(false);
 
   const isSyria = activeBranch === 'syria';
 
@@ -80,6 +82,12 @@ const App: React.FC = () => {
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Start keep-alive service to prevent Supabase from pausing due to inactivity
+  useEffect(() => {
+    startKeepAlive();
+    return () => stopKeepAlive();
   }, []);
 
   // Load data when branch is selected
@@ -112,8 +120,10 @@ const App: React.FC = () => {
     loadData();
 
     const initAuth = async () => {
+      setIsAuthChecking(true);
       const isAuth = await checkAuth(activeBranch);
       setIsAuthenticated(isAuth);
+      setIsAuthChecking(false);
       if (isAuth) {
         setIsAdminMode(true);
         setLanguage('ar');
@@ -314,9 +324,81 @@ const App: React.FC = () => {
   const isRTL = language === 'ar';
   const currentBranch = activeBranch ? BRANCHES[activeBranch] : null;
   const currency = currentBranch?.currency || 'TL';
+  const t3 = (ar: string, tr: string, en: string) => {
+    if (language === 'ar') return ar;
+    if (language === 'tr') return tr;
+    return en;
+  };
 
   if (showBranchSelector || !activeBranch) {
     return <BranchSelector onSelect={handleSelectBranch} isDarkMode={isDarkMode} setIsDarkMode={setIsDarkMode} language={language} setLanguage={setLanguage} />;
+  }
+
+  // Syria branch: show Coming Soon to non-authenticated users
+  if (isSyria && !isAuthenticated) {
+    if (isAuthChecking || isLoading) {
+      return (
+        <div className={`min-h-screen flex flex-col items-center justify-center ${isDarkMode ? 'bg-charcoal-950' : 'bg-cream-100'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+          <Loader2 size={40} className="animate-spin text-brand-500 mb-4" />
+          <p className={`text-base font-medium ${isDarkMode ? 'text-cream-400' : 'text-charcoal-500'}`}>
+            {language === 'ar' ? 'جاري التحميل...' : 'Loading...'}
+          </p>
+        </div>
+      );
+    }
+
+    const t = (ar: string, en: string) => language === 'ar' ? ar : en;
+
+    return (
+      <div className={`min-h-screen flex flex-col items-center justify-center px-4 ${isDarkMode ? 'bg-charcoal-950 text-cream-100' : 'bg-cream-100 text-charcoal-900'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+        <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} onLoginSuccess={handleLoginSuccess} branchId={activeBranch} />
+
+        {/* Background texture */}
+        <div className="absolute inset-0 opacity-[0.03]" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
+        }} />
+
+        <div className="relative z-10 text-center max-w-lg">
+          <div className="w-28 sm:w-36 mx-auto mb-6 sm:mb-8">
+            <img src="/logo1.png?v=2" alt="Pasa Pizzeria" className="w-full h-auto object-contain" />
+          </div>
+
+          <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-black mb-3 sm:mb-4 tracking-tight">
+            {t('قريباً', 'Coming Soon')}
+          </h1>
+
+          <div className={`w-16 h-1 mx-auto rounded-full mb-4 sm:mb-6 ${isDarkMode ? 'bg-brand-500' : 'bg-brand-600'}`} />
+
+          <p className={`text-sm sm:text-base md:text-lg font-light leading-relaxed mb-8 sm:mb-10 ${isDarkMode ? 'text-cream-400' : 'text-charcoal-500'}`}>
+            {t(
+              'فرع سوريا قيد التجهيز. نعمل على تقديم أفضل تجربة لكم.',
+              'Our Syria branch is being prepared. We\'re working to bring you the best experience.'
+            )}
+          </p>
+
+          <button
+            onClick={() => setIsLoginModalOpen(true)}
+            className={`inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold transition-all shadow-lg btn-press ${
+              isDarkMode
+                ? 'bg-charcoal-800 text-cream-200 hover:bg-charcoal-700 border border-charcoal-700'
+                : 'bg-charcoal-900 text-white hover:bg-charcoal-800'
+            }`}
+          >
+            <Lock size={16} />
+            {t('تسجيل دخول الإدارة', 'Admin Login')}
+          </button>
+
+          <button
+            onClick={handleSwitchBranch}
+            className={`block mx-auto mt-4 text-xs font-medium underline underline-offset-4 transition-colors ${
+              isDarkMode ? 'text-cream-600 hover:text-cream-400' : 'text-charcoal-400 hover:text-charcoal-600'
+            }`}
+          >
+            {t('العودة لاختيار الفرع', 'Back to branch selection')}
+          </button>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -328,7 +410,7 @@ const App: React.FC = () => {
         <div className="max-w-7xl mx-auto px-2 md:px-4 flex justify-between items-center gap-1 md:gap-2">
           <div className="flex-shrink-0">
             <div className="flex items-center">
-              <img src="/logo1.png" alt="Pasa Pizzeria" className="h-10 sm:h-12 md:h-16 w-auto object-contain" />
+              <img src="/logo1.png?v=2" alt="Pasa Pizzeria" className="h-10 sm:h-12 md:h-16 w-auto object-contain" />
             </div>
           </div>
 
@@ -384,7 +466,11 @@ const App: React.FC = () => {
                       onClick={() => { setIsDarkMode(!isDarkMode); setIsMobileMenuOpen(false); }}
                       className="flex items-center justify-between w-full px-2 py-2 rounded-xl text-sm font-medium text-charcoal-700 dark:text-cream-300 hover:bg-cream-100 dark:hover:bg-charcoal-800 active:bg-cream-200 dark:active:bg-charcoal-700 transition-colors"
                     >
-                      <span>{isDarkMode ? 'Light Mode' : 'Dark Mode'}</span>
+                      <span>
+                        {isDarkMode
+                          ? t3('الوضع الفاتح', 'Aydınlık Mod', 'Light Mode')
+                          : t3('الوضع الداكن', 'Karanlık Mod', 'Dark Mode')}
+                      </span>
                       {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
                     </button>
                   </div>
@@ -414,7 +500,11 @@ const App: React.FC = () => {
             >
               {isAdminMode ? <Eye size={14} className="sm:hidden" /> : <Edit3 size={14} className="sm:hidden" />}
               {isAdminMode ? <Eye size={16} className="hidden sm:block" /> : <Edit3 size={16} className="hidden sm:block" />}
-              <span className="hidden md:inline">{isAdminMode ? 'View as Customer' : 'Manage Menu'}</span>
+              <span className="hidden md:inline">
+                {isAdminMode
+                  ? t3('عرض كزبون', 'Müşteri olarak görüntüle', 'View as Customer')
+                  : t3('إدارة القائمة', 'Menüyü Yönet', 'Manage Menu')}
+              </span>
             </button>
 
             {isAuthenticated && (
@@ -439,11 +529,15 @@ const App: React.FC = () => {
 
         <div className="relative z-10 text-center max-w-4xl px-4 mt-4 sm:mt-8">
           <h1 className="font-serif text-3xl sm:text-5xl md:text-7xl font-black mb-3 sm:mb-5 tracking-tight leading-[1.1] anim-fade-up px-2" style={{animationDelay:'0.1s'}}>
-            {isAdminMode ? 'Manage Your Menu' : (language === 'ar' ? 'قائمة الطعام' : (language === 'tr' ? 'Menümüz' : 'Our Menu'))}
+            {isAdminMode ? t3('إدارة قائمتك', 'Menünüzü Yönetin', 'Manage Your Menu') : (language === 'ar' ? 'قائمة الطعام' : (language === 'tr' ? 'Menümüz' : 'Our Menu'))}
           </h1>
           <p className="text-cream-300/80 text-sm sm:text-base md:text-lg font-light mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed anim-fade-up px-4" style={{animationDelay:'0.25s'}}>
             {isAdminMode
-              ? 'Create new categories and use AI to effortlessly craft descriptions and translations for your culinary masterpieces.'
+              ? t3(
+                'أنشئ فئات جديدة واستخدم الذكاء الاصطناعي لكتابة الأوصاف والترجمات بسهولة لأطباقك المميزة.',
+                'Yeni kategoriler oluşturun ve yemekleriniz için açıklamaları ve çevirileri kolayca hazırlayın.',
+                'Create new categories and use AI to effortlessly craft descriptions and translations for your culinary masterpieces.'
+              )
               : (language === 'ar' ? 'استمتع بمجموعة مختارة من الأطباق المحضرة بشغف وأجود المكونات.' : (language === 'tr' ? 'Tutku ve taze malzemelerle hazırlanan özel yemeklerimizi keşfedin.' : 'Authentic recipes crafted with passion, tradition, and the finest ingredients.'))}
           </p>
 

@@ -1,6 +1,13 @@
 // Branch configurations for Pasa Pizzeria
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
+const sharedSupabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const sharedSupabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+if (!sharedSupabaseUrl || !sharedSupabaseKey) {
+  throw new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY');
+}
+
 export interface BranchConfig {
   id: 'syria' | 'turkey';
   name: string;
@@ -20,8 +27,8 @@ export const BRANCHES: Record<string, BranchConfig> = {
     nameTr: 'Suriye',
     flag: '🇸🇾',
     currency: 'SYP',
-    supabaseUrl: 'https://kapwaawpzuwnffgcoeyb.supabase.co',
-    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImthcHdhYXdwenV3bmZmZ2NvZXliIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NzQ4NzA2MCwiZXhwIjoyMDkzMDYzMDYwfQ._z2_WskLeVsMEFjv5uyDwKnIYAih4Qx2abBY4GEhb8Y',
+    supabaseUrl: sharedSupabaseUrl,
+    supabaseKey: sharedSupabaseKey,
   },
   turkey: {
     id: 'turkey',
@@ -30,8 +37,8 @@ export const BRANCHES: Record<string, BranchConfig> = {
     nameTr: 'Türkiye',
     flag: '🇹🇷',
     currency: 'TL',
-    supabaseUrl: 'https://adlkrhskhpvbpgptdcmd.supabase.co',
-    supabaseKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFkbGtyaHNraHB2YnBncHRkY21kIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2NDE3MDkwMiwiZXhwIjoyMDc5NzQ2OTAyfQ.4bwa9KLPVNbF6EJJbsXXvCGjDSnGKFcdYTdH5NOiV9I',
+    supabaseUrl: sharedSupabaseUrl,
+    supabaseKey: sharedSupabaseKey,
   },
 };
 

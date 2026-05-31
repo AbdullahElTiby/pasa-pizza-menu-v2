@@ -53,7 +53,8 @@ export const fetchMenu = async (branchId: string): Promise<MenuItem[]> => {
     const supabase = getSupabaseClient(branchId);
     const { data, error } = await supabase
         .from('menu_items')
-        .select('*');
+        .select('*')
+        .eq('branch_id', branchId);
 
     if (error) {
         console.error('Error fetching menu:', error);
@@ -67,7 +68,8 @@ export const fetchCategories = async (branchId: string): Promise<Category[]> => 
     const supabase = getSupabaseClient(branchId);
     const { data, error } = await supabase
         .from('categories')
-        .select('*');
+        .select('*')
+        .eq('branch_id', branchId);
 
     if (error) {
         console.error('Error fetching categories:', error);
@@ -79,7 +81,7 @@ export const fetchCategories = async (branchId: string): Promise<Category[]> => 
 
 export const saveMenuItem = async (branchId: string, item: MenuItem): Promise<void> => {
     const supabase = getSupabaseClient(branchId);
-    const payload = mapMenuItemToSupabase(item);
+    const payload = { ...mapMenuItemToSupabase(item), branch_id: branchId };
     const { error } = await supabase
         .from('menu_items')
         .upsert(payload);
@@ -95,7 +97,8 @@ export const deleteMenuItem = async (branchId: string, id: string): Promise<void
     const { error, count } = await supabase
         .from('menu_items')
         .delete({ count: 'exact' })
-        .eq('id', id);
+        .eq('id', id)
+        .eq('branch_id', branchId);
 
     if (error) {
         console.error('Error deleting menu item:', error);
@@ -109,7 +112,7 @@ export const deleteMenuItem = async (branchId: string, id: string): Promise<void
 
 export const saveCategory = async (branchId: string, category: Category): Promise<void> => {
     const supabase = getSupabaseClient(branchId);
-    const payload = mapCategoryToSupabase(category);
+    const payload = { ...mapCategoryToSupabase(category), branch_id: branchId };
     const { error } = await supabase
         .from('categories')
         .upsert(payload);
@@ -125,7 +128,8 @@ export const deleteCategory = async (branchId: string, id: string): Promise<void
     const { error, count } = await supabase
         .from('categories')
         .delete({ count: 'exact' })
-        .eq('id', id);
+        .eq('id', id)
+        .eq('branch_id', branchId);
 
     if (error) {
         console.error('Error deleting category:', error);
@@ -141,7 +145,7 @@ export const uploadMenuImage = async (branchId: string, file: File): Promise<str
     const supabase = getSupabaseClient(branchId);
     const fileExt = file.name.split('.').pop();
     const fileName = `${crypto.randomUUID()}.${fileExt}`;
-    const filePath = `public/${fileName}`;
+    const filePath = `${branchId}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
         .from('menu-images')
